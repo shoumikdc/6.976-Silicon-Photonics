@@ -1,0 +1,49 @@
+# Creating a Slot Waveguide using Lumerical
+# MIT 6.S976: Silicon Photonics
+# Created by Shoumik Chowdhury (@shoumikdc)
+
+switchtolayout;
+deleteall;
+clear;
+
+### Create SiO2 cladding ###
+addrect;
+set("name", "cladding");
+set("x", 0);
+set("x span", 5e-6); # length: 5µm
+set("y", 0);
+set("y span", 5e-6); # width: 5µm
+set("z", 0);
+set("z span", 5e-6); # height: 5µm
+set("material", "SiO2 (Glass) - Palik");
+set("render type", "wireframe");
+
+### Create Si core ###
+addrect;
+set("name", "core");
+set("x", 0);
+set("x span", 5e-6); # length: 5µm
+set("y", 0);
+set("y span", 0.4e-6); # width: 0.4µm
+set("z", 0);
+set("z span", 0.22e-6); # height: 0.22µm
+set("material", "Si (Silicon) - Palik");
+
+### Set up Eigenmode Analysis ###
+# Set solver dimensions
+addfde;
+set("solver type", "2D X normal");
+set("y", 0);
+set("y span", 4e-6);
+set("z", 0);
+set("z span", 3e-6);
+
+# Meshing
+set("mesh cells y", 1000);
+set("mesh cells z", 1000);
+
+# Solver settings
+set("wavelength", 1.55e-6); # Wavelength: 1550nm
+set('number of trial modes', 6);
+run;
+findmodes;

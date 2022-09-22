@@ -1,0 +1,147 @@
+# Creating a Slot Waveguide using Lumerical
+# MIT 6.S976: Silicon Photonics
+# Created by Shoumik Chowdhury (@shoumikdc)
+
+switchtolayout;
+deleteall;
+clear;
+
+### Create SiO2 cladding ###
+addrect;
+set("name", "cladding");
+set("x", 0);
+set("x span", 5e-6); # length: 5µm
+set("y", 0);
+set("y span", 5e-6); # width: 5µm
+set("z", 0);
+set("z span", 5e-6); # height: 5µm
+set("material", "SiO2 (Glass) - Palik");
+set("render type", "wireframe");
+
+### Create Si core ###
+addrect;
+set("name", "core");
+set("x", 0);
+set("x span", 5e-6); # length: 5µm
+set("y", 0);
+set("y span", 0.5e-6); # Initial width: 0.2µm
+set("z", 0);
+set("z span", 0.22e-6); # height: 0.22µm
+set("material", "Si (Silicon) - Palik");
+
+### Set up Eigenmode Analysis ###
+# Set solver dimensions
+addfde;
+set("solver type", "2D X normal");
+set("y", 0);
+set("y span", 4e-6);
+set("z", 0);
+set("z span", 3e-6);
+
+# Meshing
+set("mesh cells y", 1000);
+set("mesh cells z", 1000);
+
+# Solver settings
+set("wavelength", 1.55e-6); # Wavelength: 1550nm
+set('number of trial modes', 4);
+run;
+findmodes;
+
+### Sweep Width ###
+# add a new sweep and set basic properties
+addsweep;
+setsweep("sweep", "name", "width_sweep");
+setsweep("width_sweep", "type", "Ranges");
+setsweep("width_sweep", "number of points", 20);
+
+# define the parameter thickness
+param = struct;
+param.Name = "width";
+param.Parameter = "::model::core::y span";
+param.Type = "Length";
+param.Start = 0.2e-6;
+param.Stop = 0.8e-6;
+param.Units = "microns";
+
+# add the parameter thickness to the sweep
+addsweepparameter("width_sweep", param);
+
+# Results for neff, polarization fraction, and mode area
+n1 = struct;
+n1.Name = "n1";
+n1.Result = "::model::FDE::data::mode1::neff";
+f1 = struct;
+f1.Name = "f1";
+f1.Result = "::model::FDE::data::mode1::TE polarization fraction";
+a1 = struct;
+a1.Name = "a1";
+a1.Result = "::model::FDE::data::mode1::mode effective area";
+
+n2 = struct;
+n2.Name = "n2";
+n2.Result = "::model::FDE::data::mode2::neff";
+f2 = struct;
+f2.Name = "f2";
+f2.Result = "::model::FDE::data::mode2::TE polarization fraction";
+a2 = struct;
+a2.Name = "a2";
+a2.Result = "::model::FDE::data::mode2::mode effective area";
+
+n3 = struct;
+n3.Name = "n3";
+n3.Result = "::model::FDE::data::mode3::neff";
+f3 = struct;
+f3.Name = "f3";
+f3.Result = "::model::FDE::data::mode3::TE polarization fraction";
+a3 = struct;
+a3.Name = "a3";
+a3.Result = "::model::FDE::data::mode3::mode effective area";
+
+n4 = struct;
+n4.Name = "n4";
+n4.Result = "::model::FDE::data::mode4::neff";
+f4 = struct;
+f4.Name = "f4";
+f4.Result = "::model::FDE::data::mode4::TE polarization fraction";
+a4 = struct;
+a4.Name = "a4";
+a4.Result = "::model::FDE::data::mode4::mode effective area";
+
+addsweepresult("width_sweep", n1);
+addsweepresult("width_sweep", n2);
+addsweepresult("width_sweep", n3);
+addsweepresult("width_sweep", n4);
+addsweepresult("width_sweep", f1);
+addsweepresult("width_sweep", f2);
+addsweepresult("width_sweep", f3);
+addsweepresult("width_sweep", f4);
+addsweepresult("width_sweep", a1);
+addsweepresult("width_sweep", a2);
+addsweepresult("width_sweep", a3);
+addsweepresult("width_sweep", a4);
+
+# run the sweep
+runsweep("width_sweep");
+
+res_n1 = getsweepresult("width_sweep", "n1");
+res_n2 = getsweepresult("width_sweep", "n2");
+res_n3 = getsweepresult("width_sweep", "n3");
+res_n4 = getsweepresult("width_sweep", "n4");
+res_f1 = getsweepresult("width_sweep", "f1");
+res_f2 = getsweepresult("width_sweep", "f2");
+res_f3 = getsweepresult("width_sweep", "f3");
+res_f4 = getsweepresult("width_sweep", "f4");
+res_a1 = getsweepresult("width_sweep", "a1");
+res_a2 = getsweepresult("width_sweep", "a2");
+res_a3 = getsweepresult("width_sweep", "a3");
+res_a4 = getsweepresult("width_sweep", "a4");
+
+# Save the data as a Matlab file; later, we will export
+# this to Python and perform data analysis there.
+matlabsave("width_sweep");
+
+
+
+
+
