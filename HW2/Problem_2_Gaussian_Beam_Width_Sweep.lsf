@@ -1,0 +1,141 @@
+# Simulating an Edge Coupler using Lumerical
+# MIT 6.S976: Silicon Photonics HW2
+# Created by Shoumik Chowdhury (@shoumikdc)
+
+switchtolayout;
+deleteall;
+clear;
+
+### Useful constants ###
+µm = 1e-6;
+nm = 1e-9;
+
+### SiO2 cladding ###
+BOX_LEN = 50*µm; # we set "background" material in the
+                 # solver later instead of explicitly 
+                 # constructing a box here
+
+### Create Si core ###
+addrect;
+set("name", "core");
+set("y", 0); # Length matches outer box
+set("y span", BOX_LEN); # length
+set("x", 0);
+set("x span", 250*nm); # initial width: 250 nm
+set("z", 0);
+set("z span", 250*nm); # height: 250nm
+set("material", "Si3N4 (Silicon Nitride) - Luke");
+
+### Set up Eigenmode Analysis ###
+# Set solver dimensions
+addfde;
+set("solver type", "2D Y normal");
+set("x", 0);
+set("x span", BOX_LEN);
+set("z", 0);
+set("z span", BOX_LEN);
+set("background material", "SiO2 (Glass) - Palik");
+set("wavelength", 1550*nm); # Wavelength: 1550nm
+set('number of trial modes', 5);
+
+## PML Boundary Conditions (try metal, symmetry)
+set("x min bc", "PML");
+set("x max bc", "PML");
+set("z min bc", "PML");
+set("z max bc", "PML");
+
+
+### Meshing ###
+set("mesh cells x", 50);
+set("mesh cells z", 50);
+
+addmesh;
+set("x", 0);
+set("x span", 1.5*µm);
+set("z", 0);
+set("z span", 1.5*µm);
+set("y", 0);
+set("y span", 0);
+set("dx", 25*nm); # Use finer meshing
+set("dz", 25*nm); # around the waveguide
+set("override y mesh", false);
+
+### Run Simulation ###
+findmodes;
+
+### Create Beam ###
+cleardcard;
+
+setanalysis("use fully vectorial thin lens beam profile", false);
+setanalysis("waist radius", 2.5*µm);
+setanalysis("beam direction", "2D Y Normal");
+setanalysis("sample span", BOX_LEN);
+
+# For this geometry, change beam polarization to 0 for
+# TM mode, and change it to 90 for TE mode.
+setanalysis("polarization angle", 0);
+createbeam();
+
+# Compute overlap of mode1 (TE) or mode2 (TM)
+?overlap("mode2", "gaussian1");
+
+### Set up Width Sweep ###
+
+widths = linspace(250*nm, 1.2*µm, 21);
+MO = matrix(2, length(widths));
+
+for (i=1:length(widths)) {
+    # (a) Change the waveguide width    
+    switchtolayout;    
+    select("core");
+    set("x span", widths(i));
+    
+    # (b) Run!
+    findmodes;
+    
+    # (c) Calculate Overlaps
+    O = overlap("mode2", "gaussian1");
+    MO(1:2, i) = O;
+    
+    ?i;
+}
+    
+?MO;
+
+
+
+
+#### Sweep Width ###
+## add a new sweep and set basic properties
+#addsweep;
+#setsweep("sweep", "name", "width_sweep");
+#setsweep("width_sweep", "type", "Ranges");
+#setsweep("width_sweep", "number of points", 2);
+
+## define the parameter thickness
+#param = struct;
+#param.Name = "width";
+#param.Parameter = "::model::core::x span";
+#param.Type = "Length";
+#param.Start = 250*nm;
+#param.Stop = 0.5*µm;
+#param.Units = "microns";
+
+## add the parameter thickness to the sweep
+#addsweepparameter("width_sweep", param);
+
+## Results for mode overlap 
+#MO = struct;
+#MO.Name = "MO";
+#MO.Result = overlap("mode1", "gaussian1");
+
+#addsweepresult("width_sweep", MO);
+
+## run the sweep
+#runsweep("width_sweep");
+
+#res_n1 = getsweepresult("width_sweep", "MO");
+
+## Save the data as a Matlab file; later, we will export
+## this to Python and perform data analysis there.
+#matlabsave("width_sweep");

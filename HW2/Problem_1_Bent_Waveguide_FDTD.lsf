@@ -1,0 +1,102 @@
+# Bent Strip Waveguide FDTD Analysis
+# MIT 6.S976: Silicon Photonics HW2
+# Created by Shoumik Chowdhury (@shoumikdc)
+
+switchtolayout;
+deleteall;
+clear;
+
+### Useful constants ###
+µm = 1e-6;
+nm = 1e-9;
+
+### Create Si ring ###
+addring;
+set("name", "bend");
+set("x", 0); # Center at origin
+set("y", 0); # Center at origin
+set("z", 0);
+set("z span", 220*nm); # Height 220nm
+set("theta start", 0);
+set("theta stop", 90);
+set("inner radius", 4.75*µm); # Centre has r = 5µm
+set("outer radius", 5.25*µm); # with span 0.5µm
+set("material", "Si (Silicon) - Palik");
+
+### Create Arm 1 ###
+addrect;
+set("name", "arm 1");
+set("y", 5*µm); # match average radius
+set("y span", 0.5*µm); # span: 0.5µm
+set("x min", -10*µm); # arbitrary length down x
+set("x max", 0); # match up with bend
+set("z", 0);
+set("z span", 220*nm); # height: 220nm
+set("material", "Si (Silicon) - Palik");
+
+### Create Arm 2 ###
+addrect;
+set("name", "arm 2");
+set("x", 5*µm); # match average radius
+set("x span", 0.5*µm); # span: 0.5µm
+set("y min", -10*µm); # arbitrary length down y
+set("y max", 0); # match up with bend
+set("z", 0);
+set("z span", 220*nm); # height: 220nm
+set("material", "Si (Silicon) - Palik");
+
+### Add FDTD Solver ###
+addfdtd;
+set("x", 5*µm / sqrt(2)); # Ensure center of FDTD
+set("y", 5*µm / sqrt(2)); # box is on the bend
+set("x span", 8.5*µm); 
+set("y span", 8.5*µm);
+set("z", 0);
+set("z span", 3*µm);
+set("mesh accuracy", 3);
+set("background material", "SiO2 (Glass) - Palik");
+
+# PML Boundary Conditions
+set("x min bc", "PML");
+set("x max bc", "PML");
+set("y min bc", "PML");
+set("y max bc", "PML");
+set("z min bc", "PML");
+set("z max bc", "PML");
+
+### Add Ports ###
+select("FDTD");
+port1_ymin = get("y min") + 0.5*µm;
+port2_xmin = get("x min") + 0.5*µm;
+
+# We send in only TE0 into port 1
+addport;
+set("name", "port 1");
+set("injection axis", "x");
+set("x", port2_xmin);
+set("x span", 0);
+set("y", 5*µm); # Center at waveguide
+set("y span", 8.5*µm);
+updateportmodes(1); # Select TE0 mode
+
+# Then we measure what comes out at port 2
+addport;
+set("name", "port 2");
+set("injection axis", "y");
+set("y", port1_ymin);
+set("y span", 0);
+set("x", 5*µm); # Center at waveguide
+set("x span", 8.5*µm);
+updateportmodes([1, 3]); # Select TE0 (mode 1), TE1 (mode 3)
+
+# Set frequency range in ports
+setglobalsource("wavelength start", 1.2*µm);
+setglobalsource("wavelength stop", 2*µm);
+select("FDTD::ports");
+set("monitor frequency points", 21);
+
+## Solver settings
+#set("wavelength", 1.55e-6); # Wavelength: 1550nm
+#set('number of trial modes', 6);
+run;
+#findmodes;
