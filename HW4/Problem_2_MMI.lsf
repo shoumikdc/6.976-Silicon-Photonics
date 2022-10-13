@@ -1,0 +1,97 @@
+# Simulating a Multi-Mode-Interferometer in Lumerical
+# MIT 6.S976: Silicon Photonics HW4
+# Created by Shoumik Chowdhury (@shoumikdc)
+
+switchtolayout;
+deleteall;
+clear;
+
+### Useful constants ###
+µm = 1e-6;
+nm = 1e-9;
+
+### SiO2 cladding ###
+BOX_LEN = 10*µm; # we set "background" material in the
+                 # solver later instead of explicitly 
+                 # constructing a box here
+
+### Constants ###
+L = 2*µm;
+w_m = 2*µm;
+w_i = 0.774*µm;
+w_o = 0.774*µm;
+g = 1.1*µm;
+L_port = 5*µm;
+height = 220*nm;
+
+### Create MMI region ###
+addrect;
+set("name", "MMI");
+set("y", 0);
+set("y span", w_m); # Width of MMI region
+set("x", 0);
+set("x span", L); # Length of MMI region
+set("z", 0);
+set("z span", height); # Height/thickness of Si 
+set("material", "Si (Silicon) - Palik");
+
+### Create Input Port ###
+addrect;
+set("name", "input");
+set("y", 0);
+set("y span", w_i); # Width of MMI region
+set("x min", -L/2 - L_port);
+set("x max", -L/2); # Length of MMI region
+set("z", 0);
+set("z span", height); # Height/thickness of Si 
+set("material", "Si (Silicon) - Palik");
+
+### Create Top Output Port ###
+addrect;
+set("name", "top output");
+set("y", g / 2);
+set("y span", w_o); # Width of MMI region
+set("x min", L/2);
+set("x max", L/2 + L_port); # Length of MMI region
+set("z", 0);
+set("z span", height); # Height/thickness of Si 
+set("material", "Si (Silicon) - Palik");
+
+### Create Bottom Output Port ###
+addrect;
+set("name", "bottom output");
+set("y", -g / 2);
+set("y span", w_o); # Width of MMI region
+set("x min", L/2);
+set("x max", L/2 + L_port); # Length of MMI region
+set("z", 0);
+set("z span", height); # Height/thickness of Si 
+set("material", "Si (Silicon) - Palik");
+
+
+### Set up Eigenmode Analysis ###
+# Set solver dimensions
+addfde;
+set("solver type", "2D X normal");
+set("x", 0);
+set("z", 0);
+set("z span", BOX_LEN);
+set("y", 0);
+set("y span", BOX_LEN);
+set("background material", "SiO2 (Glass) - Palik");
+set("wavelength", 1550*nm); # Wavelength: 1550nm
+set('number of trial modes', 5);
+
+### PML Boundary Conditions
+set("y min bc", "PML");
+set("y max bc", "PML");
+set("z min bc", "PML");
+set("z max bc", "PML");
+
+
+#### Meshing ###
+set("mesh cells y", 500);
+set("mesh cells z", 500);
+
+### Run Simulation ###
+findmodes;

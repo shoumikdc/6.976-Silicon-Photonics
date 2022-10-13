@@ -1,0 +1,72 @@
+# Simulating Waveguide Super-Modes in Lumerical
+# MIT 6.S976: Silicon Photonics HW4
+# Created by Shoumik Chowdhury (@shoumikdc)
+
+switchtolayout;
+deleteall;
+clear;
+
+### Useful constants ###
+µm = 1e-6;
+nm = 1e-9;
+
+### SiO2 cladding ###
+BOX_LEN = 10*µm; # we set "background" material in the
+                 # solver later instead of explicitly 
+                 # constructing a box here
+                 
+### Constants ###
+L = 5*µm; # Waveguide Length
+W = 500*nm; # Wavelength Width
+height = 220*nm;  
+g = 300*nm; # Gap separation
+              
+
+### Create Top Waveguide ###
+addrect;
+set("name", "top");
+set("y min", g / 2);
+set("y max", W + g / 2); 
+set("x", 0);
+set("x span", L); 
+set("z", 0);
+set("z span", height); # Height/thickness of Si 
+set("material", "Si (Silicon) - Palik");
+
+### Create Bottom Waveguide ###
+addrect;
+set("name", "bottom");
+set("y max", -g / 2);
+set("y min", -W - g / 2); 
+set("x", 0);
+set("x span", L); 
+set("z", 0);
+set("z span", height); # Height/thickness of Si 
+set("material", "Si (Silicon) - Palik");      
+
+### Set up Eigenmode Analysis ###
+# Set solver dimensions
+addfde;
+set("solver type", "2D X normal");
+set("x", 0);
+set("z", 0);
+set("z span", BOX_LEN);
+set("y", 0);
+set("y span", BOX_LEN);
+set("background material", "SiO2 (Glass) - Palik");
+set("wavelength", 1550*nm); # Wavelength: 1550nm
+set('number of trial modes', 5);
+
+### PML Boundary Conditions
+set("y min bc", "PML");
+set("y max bc", "PML");
+set("z min bc", "PML");
+set("z max bc", "PML");
+
+
+#### Meshing ###
+set("mesh cells y", 500);
+set("mesh cells z", 500);
+
+### Run Simulation ###
+findmodes;         
