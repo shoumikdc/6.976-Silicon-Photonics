@@ -1,0 +1,10 @@
+\documentclass{article}
+\pagestyle{empty}
+\usepackage{qcircuit}
+\begin{document}
+\Qcircuit {
+ & \gate{S}  & \multigate{1}{BS}  & \gate{R}  & \multigate{1}{BS}  & \gate{R}  & \qw  & \qw  & \qw  & \qw  & \multigate{1}{BS}  & \gate{R}  & \multigate{1}{BS}  & \gate{R}  & \qw \\
+ & \gate{S}  & \ghost{BS}  & \qw  & \ghost{BS}  & \qw  & \multigate{1}{BS}  & \gate{R}  & \multigate{1}{BS}  & \gate{R}  & \ghost{BS}  & \qw  & \ghost{BS}  & \qw  & \qw \\
+ & \gate{S}  & \qw  & \qw  & \qw  & \qw  & \ghost{BS}  & \qw  & \ghost{BS}  & \qw  & \qw  & \qw  & \qw  & \gate{S}  & \qw \\
+}
+\end{document}
