@@ -1,0 +1,154 @@
+# Simulating a Multi-Mode-Interferometer in Lumerical
+# MIT 6.S976: Silicon Photonics Term Paper
+# Created by Shoumik Chowdhury (@shoumikdc)
+
+switchtolayout;
+deleteall;
+clear;
+
+### Useful constants ###
+µm = 1e-6;
+nm = 1e-9;
+
+### SiO2 cladding ###
+BOX_LEN_x = 9*µm; 
+BOX_LEN_y = 4*µm; 
+BOX_LEN_z = 3.5*µm; 
+# we set "background" material in solver
+
+### Constants ###
+L_M = 3*µm;
+W_M = 2*µm;
+W_IO = 0.5*µm;
+g = 0.734453268765405*µm;
+L_port = 3*µm;
+height = 220*nm;
+core_material = "Si (Silicon) - Palik";
+
+### Create MMI region ###
+addrect;
+set("name", "MMI");
+set("y", 0);
+set("y span", W_M); # Width of MMI region
+set("x", 0);
+set("x span", L_M); # Length of MMI region
+set("z", 0);
+set("z span", height); # Height/thickness of SiN
+set("material", core_material);
+
+### Create Top Input Port ###
+addrect;
+set("name", "top input");
+set("y", g / 2);
+set("y span", W_IO); # Width of MMI region
+set("x min", -L_M/2 - L_port);
+set("x max", -L_M/2); # Length of MMI region
+set("z", 0);
+set("z span", height); # Height/thickness of SiN
+set("material", core_material);
+
+### Create Bottom Input Port ###
+addrect;
+set("name", "bottom input");
+set("y", -g / 2);
+set("y span", W_IO); # Width of MMI region
+set("x min", -L_M/2 - L_port);
+set("x max", -L_M/2); # Length of MMI region
+set("z", 0);
+set("z span", height); # Height/thickness of SiN
+set("material", core_material);
+
+### Create Top Output Port ###
+addrect;
+set("name", "top output");
+set("y", g / 2);
+set("y span", W_IO); # Width of MMI region
+set("x min", L_M/2);
+set("x max", L_M/2 + L_port); # Length of MMI region
+set("z", 0);
+set("z span", height); # Height/thickness of SiN 
+set("material", core_material);
+
+### Create Bottom Output Port ###
+addrect;
+set("name", "bottom output");
+set("y", -g / 2);
+set("y span", W_IO); # Width of MMI region
+set("x min", L_M/2);
+set("x max", L_M/2 + L_port); # Length of MMI region
+set("z", 0);
+set("z span", height); # Height/thickness of SiN 
+set("material", core_material);
+
+
+### Set up FDTD Analysis ###
+# Set solver dimensions
+addfdtd;
+set("x", 0);
+set("x span", BOX_LEN_x);
+set("z", 0);
+set("z span", BOX_LEN_z);
+set("y", 0);
+set("y span", BOX_LEN_y);
+set("background material", "SiO2 (Glass) - Palik");
+
+
+### PML Boundary Conditions
+set("y min bc", "PML");
+set("y max bc", "PML");
+set("z min bc", "PML");
+set("z max bc", "PML");
+set("x min bc", "PML");
+set("x max bc", "PML");
+set("mesh accuracy", 3);
+
+### Add Sources
+setglobalsource("wavelength start", 1.5*µm);
+setglobalsource("wavelength stop", 1.6*µm);
+
+addmode;
+set("injection axis", "x-axis");
+set("x", -BOX_LEN_x / 2 + 1*µm);
+set("y", g / 2); # Set to top source
+set("y span", W_IO + 0.4*µm);
+set("z", 0);
+set("z span", BOX_LEN_z);
+set("number of trial modes", 10);
+
+### GLobal Source Settings
+
+
+
+### Monitor Output
+setglobalmonitor("use wavelength spacing", true);
+
+addpower;
+set("name", "monitorOutput");
+set("monitor type", "2D X-normal");
+set("x", BOX_LEN_x / 2 - 1*µm);
+set("y", 0);
+set("y span", BOX_LEN_y);
+set("z", 0);
+set("z span", BOX_LEN_z);
+
+addmodeexpansion;
+set("name", "monitorOutput_Exp");
+set("x", BOX_LEN_x / 2 - 1*µm);
+set("y", 0);
+set("y span", BOX_LEN_y);
+set("z", 0);
+set("z span", BOX_LEN_z);
+
+
+
+addpower;
+set("name", "monitorOutput_Top");
+set("x", 0);
+set("x span", BOX_LEN_x);
+set("y", 0);
+set("y span", BOX_LEN_y);
+set("z", 0);
+
+
+### Run Simulation ###
+#findmodes;
